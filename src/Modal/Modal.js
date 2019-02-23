@@ -7,6 +7,7 @@ import {
   Platform,
   PanResponder,
   StyleSheet,
+  BackHandler,
   TouchableWithoutFeedback
 } from "react-native";
 import * as Animatable from "react-native-animatable";
@@ -94,8 +95,8 @@ class ReactNativeModal extends React.Component {
   state = {
     showContent: true,
     isVisible: false,
-    deviceWidth: Dimensions.get("window").width,
-    deviceHeight: Dimensions.get("window").height,
+    deviceWidth: Dimensions.get("screen").width,
+    deviceHeight: Dimensions.get("screen").height,
     isSwipeable: this.props.swipeDirection ? true : false,
     pan: null
   };
@@ -144,6 +145,7 @@ class ReactNativeModal extends React.Component {
     if (this.state.isVisible) {
       this.open();
     }
+    BackHandler.addEventListener('hardwareBackPress', this.onBackButtonPress);
     DeviceEventEmitter.addListener(
       "didUpdateDimensions",
       this.handleDimensionsUpdate
@@ -151,6 +153,7 @@ class ReactNativeModal extends React.Component {
   }
 
   componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.onBackButtonPress)
     DeviceEventEmitter.removeListener(
       "didUpdateDimensions",
       this.handleDimensionsUpdate
@@ -166,7 +169,13 @@ class ReactNativeModal extends React.Component {
       this.close();
     }
   }
-
+  onBackButtonPress = () => {
+    if (this.props.onBackButtonPress && this.props.isVisible) {
+      this.props.onBackButtonPress()
+      return true
+    }
+    return false
+  }
   buildPanResponder = () => {
     let animEvt = null;
 
@@ -302,8 +311,8 @@ class ReactNativeModal extends React.Component {
 
   handleDimensionsUpdate = dimensionsUpdate => {
     // Here we update the device dimensions in the state if the layout changed (triggering a render)
-    const deviceWidth = Dimensions.get("window").width;
-    const deviceHeight = Dimensions.get("window").height;
+    const deviceWidth = Dimensions.get("screen").width;
+    const deviceHeight = Dimensions.get("screen").height;
     if (
       deviceWidth !== this.state.deviceWidth ||
       deviceHeight !== this.state.deviceHeight
